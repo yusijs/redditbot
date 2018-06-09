@@ -69,39 +69,45 @@ func editComment(token string, thingID string, body string, c *common.Comment) {
 	fullText := fmt.Sprintf("%s\n\n%s", body, text)
 	form.Add("text", fullText)
 	form.Add("thing_id", thingID)
-	executeRequest(form, href, token)
+	id := executeRequest(form, href, token)
+	if id != "" {
+		distinguishComment(token, fmt.Sprintf("t1_%s", id))
+		log.Println(fmt.Sprintf("Updated comment %s", id))
+	}
 }
 
-func executeRequest(form url.Values, href string, token string) {
+func executeRequest(form url.Values, href string, token string) string {
 	hq := http.Client{}
 	req, err := http.NewRequest("POST", href, strings.NewReader(form.Encode()))
 	if err != nil {
 		log.Warnln("Failed to create request", err)
-		return
+		return ""
 	}
 	req.Header.Set("User-Agent", "swbf2bot")
 	req.Header.Set("Authorization", "bearer "+token)
 	res, err := hq.Do(req)
 	if err != nil {
 		log.Warnln("Failed to perform request", err)
-		return
+		return ""
 	}
 	response, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		log.Warnln("Failed to parse response from reddit", err)
-		return
+		return ""
 	}
 	if res.StatusCode > 299 {
 		log.Warnln("Error from reddit", string(response))
-		return
+		return ""
 	}
+	var id string
 	var body common.CommentResponse
 	json.Unmarshal(response, &body)
 	if len(body.JSON.Errors) > 0 {
 		log.Warnln("Failed to insert comment", body.JSON.Errors)
 	} else {
-		log.Println("Inserted / Updated comment")
+		id = body.JSON.Data.Things[0].Data.ID
 	}
+	return id
 }
 
 func getAuthToken(auth *common.Auth) string {
@@ -145,6 +151,21 @@ func writeComment(token string, c *common.Comment) {
 	text := createCommentText(c)
 	form.Add("text", text)
 	form.Add("thing_id", c.ParentID)
+	id := executeRequest(form, href, token)
+
+	if id != "" {
+		distinguishComment(token, fmt.Sprintf("t1_%s", id))
+		log.Println(fmt.Sprintf("Updated comment %s", id))
+	}
+}
+
+func distinguishComment(token string, id string) {
+	href := "https://oauth.reddit.com/api/distinguish"
+	form := url.Values{}
+	form.Add("api_type", "json")
+	form.Add("how", "no")
+	form.Add("id", id)
+	form.Add("sticky", "true")
 	executeRequest(form, href, token)
 }
 
@@ -156,7 +177,7 @@ func createCommentText(c *common.Comment) string {
 	} else {
 		snippet = c.Body
 	}
-	//     p(t.Format("2006-01-02T15:04:05.999999-07:00"))
+
 	date := c.Timestamp.Format("2006-01-02 15:04")
 	comment := fmt.Sprintf("%s: Developer response (%s): %s", date, c.Author, snippet)
 	href := c.Link
