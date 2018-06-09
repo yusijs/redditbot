@@ -13,7 +13,7 @@
 		"striterax",
 		"aeonstream"
     ],
-    "subRedditRegex": "bottesting",
+    "subRedditRegex": "StarWarsBattlefront",
     "auth": {
         "username": "botname",
         "password": "botpass",
