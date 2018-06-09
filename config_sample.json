@@ -1,0 +1,23 @@
+{
+    "accounts": [
+        "F8rge",
+		"d_firewall",
+		"TheVestalViking",
+		"WazDICE",
+		"petervesti",
+		"EACommunityTeam",
+		"ShadowXJ",
+		"pforsman",
+		"arewid",
+		"_AndyHam_",
+		"striterax",
+		"aeonstream"
+    ],
+    "subRedditRegex": "bottesting",
+    "auth": {
+        "username": "botname",
+        "password": "botpass",
+        "clientId": "clientId",
+        "clientSecret": "clientSecret"
+    }
+}
